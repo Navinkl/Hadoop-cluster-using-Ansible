@@ -1,0 +1,89 @@
+- hosts: master_node
+  vars_files:
+          - var.yml
+  tasks:
+          - name: "Sendng JAVA jdk"
+            copy:
+                    src: "/root/jdk-8u171-linux-x64.rpm"
+                    dest: "/root"
+          - name: "sending hadoop file"
+            copy:
+                    src: "/root/hadoop-1.2.1-1.x86_64.rpm"
+                    dest: "/root"
+          - name: "installing JAVA jdk"
+            yum:
+                    name: "/root/jdk-8u171-linux-x64.rpm"
+                    state: present
+                    disable_gpg_check: yes
+          - name: "Checking Hadoop installed or not"
+            command: "rpm -q hadoop"
+            register: hadoop
+
+          - name: "Insatlling Hadoop"
+            command: "rpm -i /root/hadoop-1.2.1-1.x86_64.rpm --force"
+            when: "hadoop.rc != 0"
+
+          - name: "create master directory"
+            file:
+                    state: directory
+                    path: "{{ nn_dir }}"
+
+          - name: "sending hdfs file"
+            template:
+                    src: "/ws1/hadoop/hdfs-site.xml"
+                    dest: "/etc/hadoop"
+
+          - name: "sending core-site file"
+            template:
+                    src: "/ws1/hadoop/core-site.xml"
+                    dest: "/etc/hadoop"
+
+          - name: "formatting master"
+            shell: "echo Y | hadoop namenode -format"
+
+          - name: "starting master"
+            shell: "hadoop-daemon.sh start namenode"
+
+- hosts: slave_node
+  vars_files:
+          - var.yml
+  tasks:
+          - name: "Sendng JAVA jdk"
+            copy:
+                    src: "/root/jdk-8u171-linux-x64.rpm"
+                    dest: "/root"
+          - name: "sending hadoop file"
+            copy:
+                    src: "/root/hadoop-1.2.1-1.x86_64.rpm"
+                    dest: "/root"
+          - name: "installing JAVA jdk"
+            yum:
+                    name: "/root/jdk-8u171-linux-x64.rpm"
+                    state: present
+                    disable_gpg_check: yes
+          - name: "Checking Hadoop installed or not"
+            command: "rpm -q hadoop"
+            register: hadoop
+
+          - name: "Insatlling Hadoop"
+            command: "rpm -i /root/hadoop-1.2.1-1.x86_64.rpm --force"
+            when: "hadoop.rc != 0"
+
+          - name: "create slave directory"
+            file:
+                    state: directory
+                    path: "{{ dn_dir }}"
+
+          - name: "sending hdfs file"
+            template:
+                    src: "/ws1/hadoop/d_hdfs-site.xml"
+                    dest: "/etc/hadoop"
+
+          - name: "sending core-site file"
+            template:
+                    src: "/ws1/hadoop/d_core-site.xml"
+                    dest: "/etc/hadoop"
+
+          - name: "starting slave"
+            shell: "hadoop-daemon.sh start datanode"
+
